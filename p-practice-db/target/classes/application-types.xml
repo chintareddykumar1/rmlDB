@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="sample_input_json" format="json">
+      <types:shape format="weave" example="examples/student_output.json"><![CDATA[%dw 2.0
+
+type sample_input_json = Array<{|  name: String,   rollno: Number {"typeId": "int"},   m1: Number {"typeId": "int"},   m2: Number {"typeId": "int"}|}> {"example": "[{\\\"name\\\":\\\"Anil\\\",\\\"rollno\\\":1,\\\"m1\\\":23,\\\"m2\\\":25},{\\\"name\\\":\\\"Bavin\\\",\\\"rollno\\\":2,\\\"m1\\\":24,\\\"m2\\\":25}]"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="sample_output_json" format="json">
+      <types:shape format="weave" example="examples/student_output-1.json"><![CDATA[%dw 2.0
+
+type sample_output_json = Array<{|  name: String,   rollno: Number {"typeId": "int"},   m1: Number {"typeId": "int"},   m2: Number {"typeId": "int"}|}> {"example": "[{\\\"name\\\":\\\"Anil\\\",\\\"rollno\\\":1,\\\"m1\\\":23,\\\"m2\\\":25},{\\\"name\\\":\\\"Bavin\\\",\\\"rollno\\\":2,\\\"m1\\\":24,\\\"m2\\\":25}]"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="student_output_xml" format="xml">
+      <types:example format="xml" element="students" location="examples/student_output.xml"/>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#b9fb71e1-80de-4b57-b6e3-493911e6798f">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="sample_input_json"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="sample_output_json"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#7c3ed79c-5b8e-40f5-9837-9f143870f463">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="sample_input_json"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#490e66ac-28ff-4ab6-88e8-2432541c97c1">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="student_output_xml"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#fd98e5b4-0371-4592-8479-9b5abdb50f95">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="sample_output_json"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

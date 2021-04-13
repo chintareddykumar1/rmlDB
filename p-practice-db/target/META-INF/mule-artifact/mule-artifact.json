@@ -1,0 +1,31 @@
+{
+  "configs": [
+    "p-practice-db.xml"
+  ],
+  "secureProperties": [],
+  "redeploymentEnabled": true,
+  "name": "com.mycompany:p-practice-db:1.0.0-SNAPSHOT",
+  "minMuleVersion": "4.3.0",
+  "requiredProduct": "MULE_EE",
+  "classLoaderModelLoaderDescriptor": {
+    "id": "mule",
+    "attributes": {
+      "exportedPackages": [],
+      "exportedResources": [
+        "application-types.xml",
+        "examples/student_output-1.json",
+        "examples/student_output.json",
+        "examples/student_output.xml",
+        "log4j2.xml",
+        "p-practice-db.xml",
+        "properties/config-dev.yaml",
+        "properties/config-local.yaml",
+        "properties/secure-config.yaml"
+      ]
+    }
+  },
+  "bundleDescriptorLoader": {
+    "id": "mule",
+    "attributes": {}
+  }
+}

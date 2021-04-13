@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="1f087235-2448-4b3d-864f-573f6c856df0" file="properties\secure-config.yaml" key="mulesoft" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="58dd113d-308b-422e-94d2-c1c2cbff871f" basePath="${http.basepath}" >
+		<http:listener-connection host="${http.host}" port="${http.port}" />
+	</http:listener-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="560ff849-d4d4-4525-84f3-df04244b2772" file="properties\config-${env}.yaml" />
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="4ddadbdb-02ad-4f34-9c1f-45c319efafc6" >
+		<db:oracle-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${secure::db.password}" instance="${db.sid}"/>
+	</db:config>
+	<global-property doc:name="Global Property" doc:id="f96f7fab-d8a8-406f-a13f-ab659a3ab758" name="env" value="local" />
+	<flow name="GETStudents" doc:id="6ae5f059-6500-4671-9c72-c228a1db1e2a" >
+		<http:listener doc:name="Listener" doc:id="585fc1ba-5a10-4091-8197-ebe40f1a34b3" config-ref="HTTP_Listener_config" path="/dbget" allowedMethods="GET"/>
+		<set-variable value="#[attributes.uriParams.Id]" doc:name="Set Variable" doc:id="947693f3-0bad-4f49-a46a-bf8bf3b29992" variableName="Id"/>
+		<set-variable value="#[attributes.queryParams.format]" doc:name="Set Variable" doc:id="65f09651-b6c9-4e17-8052-465d360f6a5b" variableName="format"/>
+		<db:select doc:name="Select" doc:id="e91ec78b-8445-4b03-9426-8c7a93d5be25" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from students]]></db:sql>
+		</db:select>
+		<choice doc:name="Choice" doc:id="45c1ef25-c43f-48e9-9c1c-2be168baabf9" >
+			<when expression="#[vars.format == 'xml']">
+				<ee:transform doc:name="Transform Message" doc:id="490e66ac-28ff-4ab6-88e8-2432541c97c1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+{
+	students: {
+		(payload map ( payload01 , indexOfPayload01 ) -> {
+			student: {
+				sno: payload01.SNO,
+				sname: payload01.SNAME,
+				m1: payload01.M1,
+				m2: payload01.M2
+			}
+		})
+	}
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="fd98e5b4-0371-4592-8479-9b5abdb50f95">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	name: payload01.SNAME default "",
+	rollno: payload01.SNO default 0,
+	m1: payload01.M1 default 0,
+	m2: payload01.M2 default 0
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="Insertflow" doc:id="edff887d-1126-4c86-906c-2d32e050d359" >
+		<http:listener doc:name="Listener" doc:id="eb9d2df5-928a-4fa6-b072-9f707bc42922" config-ref="HTTP_Listener_config" path="/dbinsert" allowedMethods="POST"/>
+		<db:insert doc:name="Insert" doc:id="33dd237d-1691-4fba-a732-caece1cde711" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into students(sname,sno,m1,m2) values(:sname, :sno, :m1, :m2)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+sname: payload.sname,
+sno: payload.sno,
+m1: payload.m1,
+m2: payload.m2
+}]]]></db:input-parameters>
+		</db:insert>
+		<logger level="INFO" doc:name="Logger" doc:id="db1e4cbf-6773-4c8c-8841-e7802f956724" message="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="cc710a6b-bd11-42dd-8bd9-9fbadb9279b6" message="----Insert completed----"/>
+		<ee:transform doc:name="Transform Message" doc:id="7bee71fb-33a6-401a-86fa-887bb04c2f14" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	sname: payload.sname ++ "inserted successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="Updateflow" doc:id="31f6a82c-5035-4e31-aef1-077f066171fc" >
+		<http:listener doc:name="Listener" doc:id="1e866357-7272-4b23-aa55-82842000870e" config-ref="HTTP_Listener_config" path="/update/{Id}"/>
+		<set-variable value="#[attributes.uriParams.Id]" doc:name="Set Variable" doc:id="80d8638d-7478-4a4f-9521-f22d8a80c310" variableName="Id"/>
+		<set-variable value="#[attributes.queryParams.format]" doc:name="Set Variable" doc:id="7f6771a6-f896-4ad8-8089-ce6ab398edf2" variableName="format"/>
+		<choice doc:name="Choice" doc:id="72b938e5-6f8c-407a-bf54-0888dd1a6400" >
+			<when expression="#[vars.format == 'json']">
+				<db:update doc:name="Update" doc:id="4ba9096b-1bf7-40c0-b054-e60be5652b38" config-ref="Database_Config">
+					<db:sql ><![CDATA[update students set sname=:sname,m1=:m1, m2=:m2 where sno=:sno]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	sname: payload.sname,
+	sno: vars.Id,
+	m1: payload.m1,
+	m2: payload.m2
+}]]]></db:input-parameters>
+				</db:update>
+				<ee:transform doc:name="Transform Message" doc:id="db88fe18-33b6-4830-a583-80ecd84377fe" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<db:update doc:name="Update" doc:id="4d31eb4e-a9df-465e-a429-c9c52bd6ab0c" config-ref="Database_Config">
+					<db:sql ><![CDATA[update students set sname=:sname,m1=:m1, m2=:m2 where sno=:sno]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	sname: payload.sname,
+	sno: vars.Id,
+	m1: payload.m1,
+	m2: payload.m2
+}]]]></db:input-parameters>
+				</db:update>
+				<ee:transform doc:name="Transform Message" doc:id="9c3a163c-0140-4205-8792-6d132b71ee8b" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow doc:id="322c5926-f2d0-4352-8a86-9bf6e337c2ea" name="InsertFLow">
+		<http:listener doc:name="Listener" doc:id="23c4afb6-7836-40ba-ba82-21c02da0c8a8" config-ref="HTTP_Listener_config" path="/insert" allowedMethods="POST"/>
+		<set-variable doc:name="Set Variable" doc:id="b69a13fa-5d8f-4168-b031-14d00a4cdc44" variableName="content" value="#[attributes.headers[0]]"/>
+		<choice doc:name="Choice" doc:id="7f4b1a4e-d7d3-4d0c-a003-33919de551b4" >
+			<when expression="#[vars.content == 'application/json']">
+				<db:insert doc:name="Insert" doc:id="c00884bd-af4f-45a2-b259-86f3f777fa9c" config-ref="Database_Config">
+			<db:sql><![CDATA[insert into students(sname,sno,m1,m2) values(:sname, :sno, :m1, :m2)]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	sname: payload.sname,
+	sno: payload.sno,
+	m1: payload.m1,
+	m2: payload.m2
+}]]]></db:input-parameters>
+		</db:insert>
+			</when>
+			<otherwise >
+				<db:insert doc:name="Insert" doc:id="d511af03-9926-429f-b8c8-7097b9272ff1" config-ref="Database_Config" >
+					<db:sql ><![CDATA[insert into students(sname,sno,m1,m2) values(:sname, :sno, :m1, :m2)]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	sname: payload.sname,
+	sno: payload.sno,
+	m1: payload.m1,
+	m2: payload.m2
+}]]]></db:input-parameters>
+				</db:insert>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="Deleteflow" doc:id="7c266153-d6cd-429c-9a15-fa83b520c6a6" >
+		<http:listener doc:name="Listener" doc:id="2ec549aa-9d86-42a5-889b-633acd1a01e0" config-ref="HTTP_Listener_config" path="/dbdel" allowedMethods="DELETE"/>
+		<set-variable value="#[attributes.queryParams.name]" doc:name="Set Variable" doc:id="f52b7c2b-7fb8-42e1-913e-7222d0b88f05" variableName="name"/>
+		<db:delete doc:name="Delete" doc:id="c05abe05-9c0f-41fa-9e9c-cc9a2228f23c" config-ref="Database_Config">
+			<db:sql ><![CDATA[delete from students where sname=:sname]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	sname: vars.name
+}]]]></db:input-parameters>
+		</db:delete>
+		<logger level="INFO" doc:name="Logger" doc:id="5149105c-6644-4d99-a1dd-72349baf9d73" message='#["successfully deleted" ++ vars.name ++ " student"]'/>
+	</flow>
+</mule>
