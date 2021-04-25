@@ -1,0 +1,25 @@
+#%RAML 1.0
+title: DBconnector
+description: Configuring RAML for DB connector
+version: 1.0
+protocols:
+  - HTTP
+  - HTTPS
+
+/Students:
+  description: Getting all the student details from the DB
+  displayName: Student Information
+  get:
+    queryParameters:
+      format:
+        type: string
+        required: true
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+             sname: Anil,
+             sno: 101,
+             m1: 23,
+             m2: 24

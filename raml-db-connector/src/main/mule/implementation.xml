@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="c44a4e29-41be-47a3-843e-a2016220a421" >
+		<db:oracle-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${secure::db.password}" instance="${db.sid}" />
+	</db:config>
+	<flow name="Getallstudents" doc:id="b875a3aa-7710-4e0b-8404-9cefdf5eadb8" >
+		<set-variable value="#[attributes.queryParams.format]" doc:name="Set Variable" doc:id="667d1eb1-b993-4be9-bca5-1502d7f99d69" variableName="format"/>
+		<db:select doc:name="Select" doc:id="def168dd-3c9e-4fc6-9160-74ac1b4b3d73" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * from students]]></db:sql>
+		</db:select>
+		<choice doc:name="Choice" doc:id="992fde7c-f1bc-48af-9ebf-6d7147a314d8" >
+			<when expression="#[vars.format == 'xml']">
+				<ee:transform doc:name="Transform Message" doc:id="49554673-6be5-4fd6-87f0-72e4ac257848">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+{
+	students: {
+		(payload map ( payload01 , indexOfPayload01 ) -> {
+			student: {
+				sno: payload01.SNO,
+				sname: payload01.SNAME,
+				m1: payload01.M1,
+				m2: payload01.M2
+			}
+		})
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="324576ce-b385-463a-9fcd-e41f22b7a15c">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	name: payload01.SNAME default "",
+	rollno: payload01.SNO default 0,
+	m1: payload01.M1 default 0,
+	m2: payload01.M2 default 0
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

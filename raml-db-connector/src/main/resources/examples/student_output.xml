@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<students>
+<student>
+<sno>101</sno>
+<sname>Anil</sname>
+<m1>23</m1>
+<m2>24</m2>
+</student>
+<student>
+<sno>102</sno>
+<sname>Bavin</sname>
+<m1>25</m1>
+<m2>25</m2>
+</student>
+</students>

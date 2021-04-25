@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="student_xml" format="xml">
+      <types:example format="xml" element="students" location="examples/student_output.xml"/>
+    </types:type>
+    <types:type name="student_json" format="json">
+      <types:shape format="weave" example="examples/student_output.json"><![CDATA[%dw 2.0
+
+type student_json = Array<{|  name: String,   rollno: Number {"typeId": "int"},   m1: Number {"typeId": "int"},   m2: Number {"typeId": "int"}|}> {"example": "[{\\\"name\\\":\\\"Anil\\\",\\\"rollno\\\":1,\\\"m1\\\":23,\\\"m2\\\":25},{\\\"name\\\":\\\"Bavin\\\",\\\"rollno\\\":2,\\\"m1\\\":24,\\\"m2\\\":25}]"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#49554673-6be5-4fd6-87f0-72e4ac257848">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="student_xml"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#324576ce-b385-463a-9fcd-e41f22b7a15c">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="student_json"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>
