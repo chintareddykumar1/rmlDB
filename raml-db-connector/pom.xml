@@ -30,6 +30,24 @@
 				<version>${mule.maven.plugin.version}</version>
 				<extensions>true</extensions>
 				<configuration>
+				      <configuration>
+				<cloudhubDeployment>
+                        <uri>https://anypoint.mulesoft.com</uri>
+                        <muleversion>4.3.0</muleversion>
+                        <!-- Deploy user Parameter -->
+                        <username>anilkumarchintareddy2</username>
+                        <password>Bavin@1201Bavin@1201</password>
+                        <environment>Sandbox</environment>
+                        <applictionName>RAMLDBCONNECTOR</applictionName>
+                        <region>us-east-1</region>
+                        <workers>1</workers>
+                        <workerType>MICRO</workerType>
+                        <properties>
+                        <key>value</key>
+                        </properties>
+                        <objectstoreV2>true</objectstoreV2>
+                        </cloudhubDeployment>
+		        </configuration>
 				<sharedLibraries>
                         <sharedLibrary>
                             <groupId>com.oracle.database.jdbc</groupId>
